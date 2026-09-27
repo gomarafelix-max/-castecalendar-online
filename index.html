@@ -1,0 +1,1672 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <!-- CasteCalendar Online: static Vercel build. Shared data/auth use Supabase. -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link id="apple-touch-icon" rel="apple-touch-icon" href="">
+    <link id="page-favicon" rel="icon" href="">
+    <title>CasteCalendar Online</title>
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: #131b2e;
+            --text-color: #ffffff;
+            --title-color: #ffffff;
+            --num-color: #ffffff;
+            --libre-bg: #f1c40f;
+            --mañana-bg: #3498db;
+            --tarde-bg: #2ecc71;
+            --noche-bg: #e74c3c;
+            --vl-bg: #9b59b6;
+            --vf-bg: #e67e22;
+            --sol-bg: #f1c40f;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            height: 100vh;
+            height: 100dvh;
+            max-height: 100vh;
+            max-height: 100dvh;
+            box-sizing: border-box;
+            overflow: hidden;
+            touch-action: pan-y;
+        }
+
+        .header {
+            width: 100%;
+            max-width: none;
+            background: var(--card-bg);
+            padding: 10px 12px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-sizing: border-box;
+            margin-bottom: 6px;
+            flex-shrink: 0;
+            border: 1px solid rgba(255,255,255,0.05);
+            position: relative;
+        }
+
+        .header-top-row {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            box-sizing: border-box;
+        }
+
+        .header-logo-container {
+            /* El logo ocupa la izquierda y no deja huecos dentro de su zona */
+            width: 52%;
+            height: 65px;
+            padding: 0;
+            margin: 0;
+            border-radius: 10px;
+            box-sizing: border-box;
+            display: block;
+            overflow: hidden;
+            background: #fff;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.18);
+            flex-shrink: 0;
+        }
+
+        .header-logo-container img {
+            width: 100%;
+            height: 100%;
+            display: block;
+            /* Se permite alargar el logo para ocupar exactamente su hueco */
+            object-fit: fill;
+        }
+
+        .header-weather {
+            flex: 1;
+            min-width: 0;
+            height: 65px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.055);
+            border: 1px solid rgba(255,255,255,0.08);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+        }
+
+        .weather-place {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1.1;
+            white-space: nowrap;
+        }
+
+        .weather-icon {
+            font-size: 1.65rem;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+
+        .weather-temp {
+            margin-top: 0;
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: #5dade2;
+            line-height: 1;
+            white-space: nowrap;
+        }
+
+        .weather-feels {
+            color: #aaa;
+            font-size: 0.7rem;
+            white-space: nowrap;
+        }
+
+        .weather-temp.loading {
+            font-size: 0.78rem;
+            color: #aaa;
+        }
+
+        .header-sub-row {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 8px;
+            padding-top: 6px;
+            border-top: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .sync-status {
+            display: flex;
+            align-items: center;
+            font-size: 0.75rem;
+            color: #2ecc71;
+            background: rgba(46, 204, 113, 0.1);
+            padding: 4px 10px;
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+
+        .sync-dot {
+            width: 6px;
+            height: 6px;
+            background-color: #2ecc71;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+
+        .settings-btn {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.10);
+            color: #f1f3f7;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 6px 10px;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.16);
+            transition: transform 0.15s ease, background 0.15s ease;
+        }
+
+        .settings-btn:hover {
+            background: rgba(255,255,255,0.10);
+        }
+
+        .settings-btn:active {
+            transform: scale(0.96);
+        }
+
+        .calendar-nav {
+            width: 100%;
+            max-width: none;
+            background: var(--card-bg);
+            padding: 6px 12px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-sizing: border-box;
+            margin-bottom: 6px;
+            flex-shrink: 0;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .calendar-nav button {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 4px 10px;
+        }
+
+        .nav-center-title {
+            font-size: 0.95rem;
+            font-weight: bold;
+            color: var(--title-color);
+            letter-spacing: 0.5px;
+        }
+
+        .month-year-clickable {
+            cursor: pointer;
+            padding: 4px 10px;
+            border-radius: 8px;
+            user-select: none;
+        }
+
+        .month-year-clickable:active {
+            background: rgba(255,255,255,0.08);
+        }
+
+        .nav-picker-btn {
+            background: #2980b9;
+            border: none;
+            color: #fff;
+            font-size: 1rem;
+            cursor: pointer;
+            padding: 6px 10px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .calendar-grid {
+            width: 100%;
+            max-width: none;
+            flex-grow: 1;
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            grid-template-rows: auto repeat(6, 1fr);
+            gap: 0;
+            box-sizing: border-box;
+            min-height: 0;
+            padding-bottom: 0;
+        }
+
+        .week-day {
+            text-align: center;
+            font-size: 0.7rem;
+            color: var(--title-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .day-cell.adjacent-month {
+            opacity: 0.32;
+        }
+
+        .day-cell {
+            background: transparent;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 3px;
+            position: relative;
+            cursor: pointer;
+            overflow: hidden;
+            box-sizing: border-box;
+            border: 1px solid rgba(255,255,255,0.05);
+            min-height: 0;
+        }
+
+        .day-number {
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: var(--num-color);
+            align-self: flex-end;
+            z-index: 5;
+            line-height: 1;
+        }
+
+        .shifts-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: grid;
+            grid-template-columns: 1fr;
+            grid-template-rows: 1fr 1fr;
+            z-index: 1;
+        }
+
+        .shifts-container.single {
+            grid-template-rows: 1fr;
+        }
+
+        .shift-block {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .shift-block.libre { background-color: var(--libre-bg); color: #000; }
+        .shift-block.mañana { background-color: var(--mañana-bg); color: #fff; }
+        .shift-block.tarde { background-color: var(--tarde-bg); color: #fff; }
+        .shift-block.noche { background-color: var(--noche-bg); color: #fff; }
+
+        .day-note {
+            position: absolute;
+            bottom: 2px;
+            left: 2px;
+            right: 2px;
+            background: transparent;
+            color: #fff;
+            font-size: 0.45rem;
+            line-height: 1.1;
+            padding: 2px;
+            border-radius: 3px;
+            z-index: 6;
+            text-align: center;
+            max-height: 60%;
+            overflow: hidden;
+            word-break: break-word;
+        }
+
+        /* Mantener el calendario completamente fijo mientras se edita un día */
+        body.modal-open {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100dvh;
+            overflow: hidden;
+            overscroll-behavior: none;
+        }
+
+        .modal-overlay {
+            height: 100dvh;
+            min-height: 100%;
+            overflow: hidden;
+            overscroll-behavior: none;
+        }
+
+        /* Editor de imagen de cabecera */
+        .crop-modal {
+            max-width: 360px;
+            width: 92%;
+            gap: 10px;
+        }
+
+        .crop-stage {
+            width: 100%;
+            aspect-ratio: 1.52 / 1;
+            background: #080b13;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            touch-action: none;
+            border: 1px solid rgba(255,255,255,0.14);
+        }
+
+        .crop-stage img {
+            position: absolute;
+            max-width: none;
+            user-select: none;
+            -webkit-user-drag: none;
+            transform-origin: center center;
+            cursor: grab;
+        }
+
+        .crop-stage img.dragging { cursor: grabbing; }
+
+        .crop-frame {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            border: 2px solid rgba(255,255,255,0.9);
+            box-shadow: 0 0 0 9999px rgba(0,0,0,0.22);
+            border-radius: 10px;
+        }
+
+        .crop-help {
+            color: #aaa;
+            font-size: 0.72rem;
+            text-align: center;
+            line-height: 1.3;
+        }
+
+        .crop-zoom-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .crop-zoom-row input[type="range"] {
+            flex: 1;
+            padding: 0;
+            cursor: pointer;
+        }
+
+        /* Modales */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.75);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            background: #131b2e;
+            padding: 18px;
+            border-radius: 14px;
+            width: 90%;
+            max-width: 330px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .modal h3 {
+            margin: 0;
+            font-size: 1rem;
+            text-align: center;
+        }
+
+        .modal label {
+            font-size: 0.75rem;
+            color: #aaa;
+        }
+
+        .modal button, .modal input {
+            padding: 10px;
+            border-radius: 8px;
+            border: none;
+            font-size: 0.85rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .months-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+        }
+
+        .month-picker-btn {
+            background: #1c263f;
+            color: #fff;
+            padding: 10px 5px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.05);
+            font-size: 0.8rem;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .month-picker-btn.active {
+            background: #3498db;
+            border-color: #3498db;
+        }
+
+        .year-selector-box {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #1c263f;
+            border-radius: 8px;
+            padding: 4px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .year-btn {
+            background: #2a3655;
+            color: #fff;
+            width: 40px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            border: none;
+            cursor: pointer;
+        }
+
+        .year-display {
+            font-size: 1rem;
+            font-weight: bold;
+            color: #3498db;
+        }
+
+        .personalization-modal {
+            width: 82%;
+            max-width: 430px;
+            padding: 24px 22px;
+            border-radius: 18px;
+            gap: 14px;
+            background: #1f1f26;
+            border: 1px solid rgba(255,255,255,0.10);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+        }
+
+        .personalization-modal h3 {
+            font-size: 1.25rem;
+            margin-bottom: 8px;
+        }
+
+        .color-setting {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-height: 58px;
+            font-size: 1rem !important;
+            font-weight: 600;
+            color: #f5f5f7 !important;
+        }
+
+        .color-setting input[type="color"] {
+            width: 48px;
+            height: 48px;
+            padding: 0;
+            border: none;
+            border-radius: 14px;
+            background: transparent;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .color-setting input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        .color-setting input[type="color"]::-webkit-color-swatch {
+            border: none;
+            border-radius: 14px;
+        }
+
+        .weather-city-setting {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 2px;
+        }
+
+        .weather-city-setting span {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #f5f5f7;
+        }
+
+        .weather-city-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .weather-city-input {
+            flex: 1;
+            min-width: 0;
+            height: 46px;
+            box-sizing: border-box;
+            padding: 0 13px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.10);
+            background: #2a2a33;
+            color: #fff;
+            font-size: 16px;
+            outline: none;
+        }
+
+        .weather-city-btn {
+            height: 46px;
+            padding: 0 14px;
+            border: none;
+            border-radius: 12px;
+            background: #3498db;
+            color: #fff;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .weather-city-status {
+            min-height: 16px;
+            font-size: 0.72rem;
+            color: #aaa;
+        }
+
+        .image-setting-label {
+            font-size: 0.95rem !important;
+            font-weight: 700;
+            color: #a6a6b0 !important;
+            margin-top: 2px;
+        }
+
+        .image-pick-btn {
+            width: 100%;
+            padding: 15px 12px;
+            border-radius: 14px;
+            border: 1px solid rgba(255,255,255,0.04);
+            background: #292932;
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 5px 14px rgba(0,0,0,0.18);
+        }
+
+        .personalization-actions {
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .personalization-actions button {
+            min-height: 52px;
+            border-radius: 14px;
+            font-size: 0.98rem;
+            font-weight: 800;
+        }
+
+        .remove-image-btn {
+            background: #4a4a52;
+            flex: 1;
+        }
+
+        .done-btn {
+            background: #0796d6;
+            flex: 1;
+        }
+
+        .modal-buttons-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 5px;
+        }
+
+        .modal input[type="text"] {
+            background: #1c263f;
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.1);
+            font-size: 16px;
+        }
+
+        .modal input[type="color"] {
+            background: none;
+            border: none;
+            width: 40px;
+            height: 30px;
+            cursor: pointer;
+        }
+
+        .btn-libre { background: var(--libre-bg); color: #000; }
+        .btn-mañana { background: var(--mañana-bg); color: #fff; }
+        .btn-tarde { background: var(--tarde-bg); color: #fff; }
+        .btn-noche { background: var(--noche-bg); color: #fff; }
+        .btn-vl { background: var(--vl-bg); color: #fff; }
+        .btn-vf { background: var(--vf-bg); color: #fff; }
+        .btn-sol { background: var(--sol-bg); color: #000; }
+        .btn-action { background: #3498db; color: #fff; flex: 1; }
+        .btn-delete { background: #e74c3c; color: #fff; }
+        .btn-cancel { background: #1c263f; color: #fff; flex: 1; border: 1px solid rgba(255,255,255,0.1); }
+
+        .auth-gate{position:fixed;inset:0;z-index:9999;background:var(--bg-color);display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box}
+        .auth-card{width:min(360px,100%);background:var(--card-bg);border:1px solid rgba(255,255,255,.09);border-radius:18px;padding:22px;box-sizing:border-box;box-shadow:0 14px 45px rgba(0,0,0,.35)}
+        .auth-title{font-size:1.25rem;font-weight:800;text-align:center;color:#fff;margin-bottom:4px}
+        .auth-subtitle{text-align:center;color:#aaa;font-size:.82rem;margin-bottom:18px}
+        .auth-card input{width:100%;box-sizing:border-box;margin:6px 0;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.18);color:#fff;outline:none}
+        .auth-card button{width:100%;margin-top:8px}
+        .auth-status{text-align:center;min-height:20px;margin-top:10px;color:#f1c40f;font-size:.78rem}
+        .cloud-user{font-size:.72rem;color:#aaa;margin-right:8px}
+        body.auth-locked > *:not(#auth-gate){visibility:hidden}
+        .user-mode .admin-only{display:none!important}
+    </style>
+</head>
+<body id="main-body">
+    <div id="auth-gate" class="auth-gate">
+        <div class="auth-card">
+            <div class="auth-title">CasteCalendar · Calendario</div>
+            <div class="auth-subtitle">Acceso privado y compartido</div>
+            <input id="auth-email" type="email" autocomplete="username" placeholder="Correo electrónico">
+            <input id="auth-password" type="password" autocomplete="current-password" placeholder="Clave">
+            <button class="btn-action" id="auth-login-btn" onclick="loginCloud()">Entrar</button>
+            <div id="auth-status" class="auth-status"></div>
+        </div>
+    </div>
+
+
+    <div class="header">
+        <div class="header-top-row">
+            <div class="header-logo-container" onclick="document.getElementById('logo-image-input').click()" role="button" tabindex="0" aria-label="Cambiar logo">
+                <!-- Logotipo CasteCalendar -->
+            <img id="header-logo-image" src="data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22 width=%22800%22 height=%22200%22 viewBox=%220 0 800 200%22%3E%3Crect width=%22800%22 height=%22200%22 rx=%2230%22 fill=%22%236f6ef6%22%2F%3E%3Ctext x=%22400%22 y=%22125%22 text-anchor=%22middle%22 font-family=%22Arial%2Csans-serif%22 font-size=%22100%22 font-weight=%22700%22 fill=%22white%22%3ECasteCalendar%3C%2Ftext%3E%3C%2Fsvg%3E" alt="CasteCalendar" style="width:100%; height:100%; display:block; object-fit:fill;">
+            </div>
+            <input type="file" id="logo-image-input" accept="image/*" onchange="handleLogoUpload(event)" style="display:none;">
+            <div class="header-weather" aria-label="Temperatura actual" onclick="openSettings(true)" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){openSettings(true)}">
+                <div class="weather-place" id="weather-place">📍 Castejón de Valdejasa</div>
+                <div class="weather-icon" id="weather-icon" aria-hidden="true">☀️</div>
+                <div class="weather-temp loading" id="weather-temp">Cargando…</div>
+            </div>
+        </div>
+        <div class="header-sub-row">
+            <div style="display:flex;align-items:center;min-width:0;"><div class="weather-feels" id="weather-feels">Sensación térmica: -- °C</div><span id="cloud-user" class="cloud-user"></span></div>
+            <button class="settings-btn" onclick="openSettings()">⚙️ Ajustes</button>
+        </div>
+    </div>
+
+    <div class="calendar-nav">
+        <span class="nav-center-title month-year-clickable" id="month-year-label" onclick="openMonthPicker()" role="button" tabindex="0" aria-label="Seleccionar mes y año">SEPTIEMBRE 2026</span>
+    </div>
+
+    <div class="calendar-grid" id="calendar-grid">
+        <div class="week-day">LUN</div>
+        <div class="week-day">MAR</div>
+        <div class="week-day">MIÉ</div>
+        <div class="week-day">JUE</div>
+        <div class="week-day">VIE</div>
+        <div class="week-day">SÁB</div>
+        <div class="week-day">DOM</div>
+    </div>
+
+    <!-- Modal Selector de Mes y Año -->
+    <div class="modal-overlay" id="month-picker-modal">
+        <div class="modal">
+            <h3>Seleccionar Mes y Año</h3>
+            <label>Mes:</label>
+            <div class="months-grid" id="months-grid-container"></div>
+            
+            <label style="margin-top: 5px;">Año:</label>
+            <div class="year-selector-box">
+                <button class="year-btn" onclick="adjustPickerYear(-1)">-</button>
+                <span class="year-display" id="picker-year-display">2026</span>
+                <button class="year-btn" onclick="adjustPickerYear(1)">+</button>
+            </div>
+
+            <div class="modal-buttons-row">
+                <button class="btn-cancel" onclick="closeMonthPicker()">Cancelar</button>
+                <button class="btn-action" onclick="applyMonthPicker()">Aceptar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Turnos -->
+    <div class="modal-overlay" id="shift-modal">
+        <div class="modal">
+            <h3 id="modal-date-title">Día</h3>
+            <label class="admin-only">Turno Principal (1):</label>
+            <div class="admin-only" style="display: flex; gap: 5px;">
+                <button class="btn-libre" style="flex:1;" onclick="setShift(0, 'libre')">Libre</button>
+                <button class="btn-mañana" style="flex:1;" onclick="setShift(0, 'mañana')">M</button>
+                <button class="btn-tarde" style="flex:1;" onclick="setShift(0, 'tarde')">T</button>
+                <button class="btn-noche" style="flex:1;" onclick="setShift(0, 'noche')">N</button>
+                <button class="btn-vl" style="flex:1;" onclick="setShift(0, 'vl')">VL</button>
+                <button class="btn-vf" style="flex:1;" onclick="setShift(0, 'vf')">VF</button>
+                <button class="btn-sol" style="flex:1;" onclick="setShift(0, 'sol')">☀️</button>
+            </div>
+            
+            <label class="admin-only" style="margin-top: 5px;">Segundo Turno (Opcional):</label>
+            <div class="admin-only" style="display: flex; gap: 5px;">
+                <button class="btn-libre" style="flex:1;" onclick="setShift(1, 'libre')">Libre</button>
+                <button class="btn-mañana" style="flex:1;" onclick="setShift(1, 'mañana')">M</button>
+                <button class="btn-tarde" style="flex:1;" onclick="setShift(1, 'tarde')">T</button>
+                <button class="btn-noche" style="flex:1;" onclick="setShift(1, 'noche')">N</button>
+                <button class="btn-vl" style="flex:1;" onclick="setShift(1, 'vl')">VL</button>
+                <button class="btn-vf" style="flex:1;" onclick="setShift(1, 'vf')">VF</button>
+                <button class="btn-sol" style="flex:1;" onclick="setShift(1, 'sol')">☀️</button>
+            </div>
+
+            <input type="text" id="note-input" maxlength="50" placeholder="Escribe tu nota... (máx. 50 caracteres)" style="margin-top: 5px;">
+            <div class="modal-buttons-row">
+                <button class="btn-action" onclick="saveNote()">Guardar Nota</button>
+                <button class="btn-delete admin-only" onclick="clearDay()">Borrar Día</button>
+            </div>
+            <button class="btn-cancel" onclick="closeModal()" style="width:100%;">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- Editor para mover/recortar la imagen del logo -->
+    <div class="modal-overlay" id="logo-crop-modal">
+        <div class="modal crop-modal">
+            <h3>Ajustar imagen de cabecera</h3>
+            <div class="crop-stage" id="logo-crop-stage">
+                <img id="logo-crop-image" alt="Vista previa de la imagen">
+                <div class="crop-frame"></div>
+            </div>
+            <div class="crop-help">Arrastra la imagen para moverla y usa el zoom para encajarla antes de fijarla.</div>
+            <div class="crop-zoom-row">
+                <span>−</span>
+                <input id="logo-crop-zoom" type="range" min="1" max="3" step="0.01" value="1">
+                <span>+</span>
+            </div>
+            <div class="modal-buttons-row">
+                <button class="btn-cancel" onclick="cancelLogoCrop()">Cancelar</button>
+                <button class="btn-action" onclick="confirmLogoCrop()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Configuración -->
+    <div class="modal-overlay" id="settings-modal">
+        <div class="modal personalization-modal">
+            <h3>Personalización</h3>
+
+            <label class="weather-city-setting">
+                <span>Ciudad o código postal para el tiempo:</span>
+                <div class="weather-city-row">
+                    <input type="text" id="weather-city-input" class="weather-city-input" placeholder="Ciudad o código postal">
+                    <button type="button" class="weather-city-btn" onclick="setWeatherCity()">Aplicar</button>
+                </div>
+                <small class="weather-city-status" id="weather-city-status"></small>
+            </label>
+
+            <label class="color-setting">
+                <span>Color Título:</span>
+                <input type="color" id="picker-title" value="#ffffff" onchange="updateCustomization()">
+            </label>
+
+            <label class="color-setting">
+                <span>Color Números:</span>
+                <input type="color" id="picker-num" value="#ffffff" onchange="updateCustomization()">
+            </label>
+
+            <label class="color-setting">
+                <span>Fondo Calendario:</span>
+                <input type="color" id="picker-card" value="#131b2e" onchange="updateCustomization()">
+            </label>
+
+            <label class="image-setting-label">Fondo con imagen (Móvil):</label>
+            <input type="file" id="bg-image-input" accept="image/*" onchange="handleImageUpload(event)" style="display:none;">
+            <button class="image-pick-btn" onclick="document.getElementById('bg-image-input').click()">📁&nbsp; Elegir Imagen</button>
+
+            <div class="modal-buttons-row personalization-actions">
+                <button class="btn-delete remove-image-btn" onclick="removeBgImage()">Quitar Imagen</button>
+                <button class="btn-action done-btn" onclick="closeSettings()">OK</button>
+            </div>
+            <button class="btn-cancel" onclick="resetCustomization()" style="width:100%;">Deshacer personalizado</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = "https://rotjnlmzuckwplwqbue.supabase.co";
+        const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_nVCNjJEg27-pIYA2Gh8jQw_qBvMXlh1";
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+        let currentUser = null;
+        let currentRole = null;
+        let cloudReady = false;
+
+        let currentDate = new Date(2026, 8, 1);
+        let selectedDayKey = null;
+        let pickerSelectedMonth = currentDate.getMonth();
+        let pickerSelectedYear = currentDate.getFullYear();
+        let calendarData = JSON.parse(localStorage.getItem('castecalendar_calendar_data')) || {};
+        let settingsData = JSON.parse(localStorage.getItem('castecalendar_settings')) || {
+            titleColor: '#ffffff',
+            numColor: '#ffffff',
+            cardBg: '#131b2e',
+            bgImage: '',
+            logoImage: '',
+            weatherCity: 'Castejón de Valdejasa',
+            weatherLatitude: 41.8147,
+            weatherLongitude: -0.8894
+        };
+
+        let logoCropImageSource = '';
+        let logoCropScale = 1;
+        let logoCropX = 0;
+        let logoCropY = 0;
+        let logoCropStartX = 0;
+        let logoCropStartY = 0;
+        let logoCropStartImgX = 0;
+        let logoCropStartImgY = 0;
+        let logoCropDragging = false;
+
+        // Compatibilidad con configuraciones guardadas en versiones anteriores.
+        settingsData.weatherCity = settingsData.weatherCity || 'Castejón de Valdejasa';
+        settingsData.weatherLatitude = Number.isFinite(Number(settingsData.weatherLatitude)) ? Number(settingsData.weatherLatitude) : 41.8147;
+        settingsData.weatherLongitude = Number.isFinite(Number(settingsData.weatherLongitude)) ? Number(settingsData.weatherLongitude) : -0.8894;
+
+        const defaultLogoSrc = document.getElementById('header-logo-image').src;
+
+        const monthShortNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+        const monthFullNames = ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"];
+
+        function setAuthStatus(msg, ok=false){ const el=document.getElementById('auth-status'); if(el){el.textContent=msg; el.style.color=ok?'#2ecc71':'#f1c40f';} }
+
+        async function loginCloud(){
+            const email=document.getElementById('auth-email').value.trim();
+            const password=document.getElementById('auth-password').value;
+            if(!email || !password){ setAuthStatus('Escribe el correo y la clave.'); return; }
+            setAuthStatus('Entrando…');
+            const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
+            if(error){ setAuthStatus(error.message.includes('Invalid login credentials')?'Correo o clave incorrectos.':error.message); return; }
+            await startCloudSession(data.user);
+        }
+
+        async function logoutCloud(){ await supabaseClient.auth.signOut(); location.reload(); }
+
+        async function getMyRole(userId){
+            const {data,error}=await supabaseClient
+                .from('profiles')
+                .select('role')
+                .eq('user_id',userId)
+                .single();
+            if(error) throw error;
+            return data?.role || null;
+        }
+
+        function isEmptyObject(value){
+            return !value || typeof value !== 'object' || Object.keys(value).length === 0;
+        }
+
+        async function loadCloudData(){
+            const localCalendar = JSON.parse(localStorage.getItem('castecalendar_calendar_data')) || {};
+            const localSettings = JSON.parse(localStorage.getItem('castecalendar_settings')) || settingsData;
+
+            const [shiftsRes,settingsRes,notesRes]=await Promise.all([
+                supabaseClient.from('calendar_shifts').select('day,shift'),
+                supabaseClient.from('calendar_settings').select('data').eq('id',1).maybeSingle(),
+                supabaseClient.from('calendar_notes').select('day,note')
+            ]);
+
+            if(shiftsRes.error) throw shiftsRes.error;
+            if(settingsRes.error) throw settingsRes.error;
+            if(notesRes.error) throw notesRes.error;
+
+            const cloudShifts = shiftsRes.data || [];
+            const cloudNotes = notesRes.data || [];
+            const cloudSettings = settingsRes.data?.data || {};
+
+            // Primera puesta en marcha: el administrador conserva los datos locales
+            // y los sube a Supabase si la nube todavía está vacía.
+            if(currentRole==='admin' && cloudShifts.length===0 && cloudNotes.length===0 && isEmptyObject(cloudSettings)){
+                calendarData = localCalendar;
+                settingsData = {...settingsData,...localSettings};
+                await saveCalendarCloud();
+                await saveSettingsCloud();
+
+                const noteRows = Object.entries(localCalendar)
+                    .filter(([,v])=>v?.note)
+                    .map(([day,v])=>({
+                        day,
+                        note:String(v.note).slice(0,50),
+                        updated_at:new Date().toISOString(),
+                        updated_by:currentUser.id
+                    }));
+                if(noteRows.length){
+                    const {error}=await supabaseClient.from('calendar_notes').upsert(noteRows);
+                    if(error) console.error('Notas iniciales',error);
+                }
+
+                localStorage.setItem('castecalendar_calendar_data',JSON.stringify(calendarData));
+                localStorage.setItem('castecalendar_settings',JSON.stringify(settingsData));
+                return;
+            }
+
+            calendarData = {};
+
+            cloudShifts.forEach(row=>{
+                let shifts=[];
+                try{
+                    const parsed=JSON.parse(row.shift);
+                    shifts=Array.isArray(parsed)?parsed:[String(row.shift)];
+                }catch(e){
+                    shifts=row.shift?[String(row.shift)]:[];
+                }
+                calendarData[row.day]={shifts};
+            });
+
+            cloudNotes.forEach(row=>{
+                if(!calendarData[row.day]) calendarData[row.day]={shifts:[]};
+                calendarData[row.day].note=row.note||'';
+            });
+
+            if(settingsRes.data?.data) settingsData={...settingsData,...settingsRes.data.data};
+
+            localStorage.setItem('castecalendar_calendar_data',JSON.stringify(calendarData));
+            localStorage.setItem('castecalendar_settings',JSON.stringify(settingsData));
+        }
+
+        async function saveCalendarCloud(){
+            if(!cloudReady || currentRole!=='admin') return;
+
+            const rows=Object.entries(calendarData)
+                .filter(([,v])=>Array.isArray(v?.shifts) && v.shifts.length)
+                .map(([day,v])=>({
+                    day,
+                    shift:JSON.stringify(v.shifts),
+                    updated_at:new Date().toISOString(),
+                    updated_by:currentUser?.id || null
+                }));
+
+            if(!rows.length) return;
+            const {error}=await supabaseClient.from('calendar_shifts').upsert(rows,{onConflict:'day'});
+            if(error) console.error('Turnos',error);
+        }
+
+        async function deleteShiftCloud(dayKey){
+            if(!cloudReady || currentRole!=='admin') return;
+            const {error}=await supabaseClient.from('calendar_shifts').delete().eq('day',dayKey);
+            if(error) console.error('Borrar turno',error);
+        }
+
+        async function saveSettingsCloud(){
+            if(!cloudReady) return;
+            const {error}=await supabaseClient
+                .from('calendar_settings')
+                .upsert({id:1,data:settingsData,updated_at:new Date().toISOString(),updated_by:currentUser?.id || null},{onConflict:'id'});
+            if(error) console.error('Configuración',error);
+        }
+
+        async function saveNoteCloud(dayKey,note){
+            if(!cloudReady || !currentUser) return;
+            const clean=(note||'').slice(0,50);
+            let result;
+            if(clean){
+                result=await supabaseClient.from('calendar_notes').upsert({
+                    day:dayKey,
+                    note:clean,
+                    updated_at:new Date().toISOString(),
+                    updated_by:currentUser.id
+                },{onConflict:'day'});
+            } else {
+                result=await supabaseClient.from('calendar_notes').delete().eq('day',dayKey);
+            }
+            if(result.error) console.error('Nota',result.error);
+        }
+
+        function applyRoleUI(){
+            document.body.classList.toggle('user-mode',currentRole!=='admin');
+            document.getElementById('cloud-user').textContent=currentRole==='admin'?'Administrador':'Usuario';
+        }
+
+        async function refreshCloud(){
+            if(!cloudReady) return;
+            try{
+                await loadCloudData();
+                applySettings();
+                renderCalendar();
+            }catch(e){ console.error('Sincronización',e); }
+        }
+
+        function startRealtimeSync(){
+            if(window.casteCalendarRealtimeChannel){
+                try{ supabaseClient.removeChannel(window.casteCalendarRealtimeChannel); }catch(e){}
+            }
+
+            window.casteCalendarRealtimeChannel = supabaseClient
+                .channel('castecalendar-sync')
+                .on('postgres_changes',{event:'*',schema:'public',table:'calendar_settings'},()=>refreshCloud())
+                .on('postgres_changes',{event:'*',schema:'public',table:'calendar_shifts'},()=>refreshCloud())
+                .on('postgres_changes',{event:'*',schema:'public',table:'calendar_notes'},()=>refreshCloud())
+                .subscribe();
+        }
+
+        async function startCloudSession(user){
+            currentUser=user;
+            try{
+                currentRole=await getMyRole(user.id);
+                if(!currentRole) throw new Error('Sin rol');
+                cloudReady=true;
+                await loadCloudData();
+            }catch(e){
+                cloudReady=false;
+                setAuthStatus('Tu usuario aún no está configurado.');
+                await supabaseClient.auth.signOut();
+                return;
+            }
+
+            document.body.classList.remove('auth-locked');
+            document.getElementById('auth-gate').style.display='none';
+            applyRoleUI();
+            applySettings();
+            renderCalendar();
+            startWeatherUpdates();
+            startRealtimeSync();
+        }
+
+        async function initCloud(){
+            document.body.classList.add('auth-locked');
+            const {data}=await supabaseClient.auth.getSession();
+            if(data.session?.user){ await startCloudSession(data.session.user); }
+        }
+
+        function weatherIconFromCode(code, isDay) {
+            if (code === 0) return isDay ? '☀️' : '🌙';
+            if (code === 1 || code === 2) return isDay ? '🌤️' : '☁️';
+            if (code === 3) return '☁️';
+            if (code === 45 || code === 48) return '🌫️';
+            if ([51, 53, 55, 56, 57].includes(code)) return '🌦️';
+            if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return '🌧️';
+            if ([71, 73, 75, 77, 85, 86].includes(code)) return '🌨️';
+            if ([95, 96, 99].includes(code)) return '⛈️';
+            return isDay ? '🌤️' : '☁️';
+        }
+
+        async function updateWeather() {
+            const tempEl = document.getElementById('weather-temp');
+            const iconEl = document.getElementById('weather-icon');
+            const placeEl = document.getElementById('weather-place');
+            try {
+                const city = settingsData.weatherCity || 'Castejón de Valdejasa';
+                const lat = Number(settingsData.weatherLatitude);
+                const lon = Number(settingsData.weatherLongitude);
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(lat)}&longitude=${encodeURIComponent(lon)}&current=temperature_2m,apparent_temperature,weather_code,is_day&timezone=auto`;
+                const response = await fetch(url, { cache: 'no-store' });
+                if (!response.ok) throw new Error('weather');
+                const data = await response.json();
+                const feels = Math.round(data.current.apparent_temperature);
+                const feelsEl = document.getElementById('weather-feels');
+                feelsEl.textContent = `Sensación térmica: ${feels} °C`;
+                const code = data.current.weather_code;
+                const isDay = Boolean(data.current.is_day);
+                placeEl.textContent = city;
+                iconEl.textContent = weatherIconFromCode(code, isDay);
+                tempEl.textContent = `${Math.round(data.current.temperature_2m)} °C`;
+                tempEl.classList.remove('loading');
+            } catch (e) {
+                placeEl.textContent = settingsData.weatherCity || 'Castejón de Valdejasa';
+                iconEl.textContent = '🌤️';
+                tempEl.textContent = '-- °C';
+                document.getElementById('weather-feels').textContent = 'Sensación térmica: -- °C';
+                tempEl.classList.remove('loading');
+            }
+        }
+
+        async function setWeatherCity() {
+            const input = document.getElementById('weather-city-input');
+            const status = document.getElementById('weather-city-status');
+            const city = input.value.trim();
+            if (!city) {
+                status.textContent = 'Escribe una ciudad o localidad.';
+                return;
+            }
+
+            status.textContent = 'Buscando ciudad…';
+            try {
+                const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=es&format=json`;
+                const response = await fetch(url, { cache: 'no-store' });
+                if (!response.ok) throw new Error('geocoding');
+                const data = await response.json();
+                if (!data.results || !data.results.length) throw new Error('not-found');
+
+                const result = data.results[0];
+                settingsData.weatherCity = result.name;
+                settingsData.weatherLatitude = Number(result.latitude);
+                settingsData.weatherLongitude = Number(result.longitude);
+                localStorage.setItem('castecalendar_settings', JSON.stringify(settingsData));
+                await saveSettingsCloud();
+
+                input.value = settingsData.weatherCity;
+                status.textContent = 'Ciudad guardada.';
+                await updateWeather();
+                closeSettings();
+            } catch (e) {
+                status.textContent = 'No he encontrado esa ciudad. Prueba con otro nombre.';
+            }
+        }
+
+        function startWeatherUpdates() {
+            updateWeather();
+            setInterval(updateWeather, 10 * 60 * 1000);
+        }
+
+        function applySettings() {
+            settingsData.titleColor = settingsData.titleColor || '#ffffff';
+            document.documentElement.style.setProperty('--title-color', settingsData.titleColor);
+            document.documentElement.style.setProperty('--num-color', settingsData.numColor);
+            document.documentElement.style.setProperty('--card-bg', settingsData.cardBg);
+            
+            if (settingsData.bgImage) {
+                document.body.style.backgroundImage = `url(${settingsData.bgImage})`;
+            } else {
+                document.body.style.backgroundImage = 'none';
+            }
+
+            const logoEl = document.getElementById('header-logo-image');
+            logoEl.src = settingsData.logoImage || defaultLogoSrc;
+            updateHomeScreenIcon();
+
+            document.getElementById('weather-city-input').value = settingsData.weatherCity || 'Castejón de Valdejasa';
+            document.getElementById('picker-title').value = settingsData.titleColor;
+            document.getElementById('picker-num').value = settingsData.numColor;
+            document.getElementById('picker-card').value = settingsData.cardBg;
+        }
+
+        async function updateCustomization() {
+            settingsData.titleColor = document.getElementById('picker-title').value;
+            settingsData.numColor = document.getElementById('picker-num').value;
+            settingsData.cardBg = document.getElementById('picker-card').value;
+            localStorage.setItem('castecalendar_settings', JSON.stringify(settingsData));
+            await saveSettingsCloud();
+            applySettings();
+            renderCalendar();
+            closeSettings();
+        }
+
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    settingsData.bgImage = e.target.result;
+                    localStorage.setItem('castecalendar_settings', JSON.stringify(settingsData));
+                    saveSettingsCloud().then(() => applySettings());
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function handleLogoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                openLogoCropEditor(e.target.result);
+            };
+            reader.readAsDataURL(file);
+            event.target.value = '';
+        }
+
+        function openLogoCropEditor(src) {
+            logoCropImageSource = src;
+            logoCropScale = 1;
+            logoCropX = 0;
+            logoCropY = 0;
+            document.getElementById('logo-crop-zoom').value = '1';
+            const img = document.getElementById('logo-crop-image');
+            img.src = src;
+            document.getElementById('logo-crop-modal').style.display = 'flex';
+            img.onload = () => {
+                positionLogoCropImage(true);
+            };
+        }
+
+        function positionLogoCropImage(reset = false) {
+            const stage = document.getElementById('logo-crop-stage');
+            const img = document.getElementById('logo-crop-image');
+            if (!img.naturalWidth || !img.naturalHeight) return;
+            const sw = stage.clientWidth;
+            const sh = stage.clientHeight;
+            const base = Math.max(sw / img.naturalWidth, sh / img.naturalHeight);
+            const scale = base * logoCropScale;
+            const w = img.naturalWidth * scale;
+            const h = img.naturalHeight * scale;
+            if (reset) {
+                logoCropX = (sw - w) / 2;
+                logoCropY = (sh - h) / 2;
+            }
+            img.style.width = w + 'px';
+            img.style.height = h + 'px';
+            img.style.left = logoCropX + 'px';
+            img.style.top = logoCropY + 'px';
+        }
+
+        function clampLogoCropPosition() {
+            const stage = document.getElementById('logo-crop-stage');
+            const img = document.getElementById('logo-crop-image');
+            const sw = stage.clientWidth, sh = stage.clientHeight;
+            const w = img.offsetWidth, h = img.offsetHeight;
+            if (w <= sw) logoCropX = (sw - w) / 2;
+            else logoCropX = Math.min(0, Math.max(sw - w, logoCropX));
+            if (h <= sh) logoCropY = (sh - h) / 2;
+            else logoCropY = Math.min(0, Math.max(sh - h, logoCropY));
+            positionLogoCropImage(false);
+        }
+
+        function confirmLogoCrop() {
+            const stage = document.getElementById('logo-crop-stage');
+            const img = document.getElementById('logo-crop-image');
+            if (!img.naturalWidth) return;
+            const canvas = document.createElement('canvas');
+            const outW = 900, outH = Math.round(outW / (stage.clientWidth / stage.clientHeight));
+            canvas.width = outW;
+            canvas.height = outH;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, outW, outH);
+            const sx = Math.max(0, -logoCropX / img.offsetWidth * img.naturalWidth);
+            const sy = Math.max(0, -logoCropY / img.offsetHeight * img.naturalHeight);
+            const sw = Math.min(img.naturalWidth, stage.clientWidth / img.offsetWidth * img.naturalWidth);
+            const sh = Math.min(img.naturalHeight, stage.clientHeight / img.offsetHeight * img.naturalHeight);
+            ctx.drawImage(img, sx, sy, sw, sh, 0, 0, outW, outH);
+            settingsData.logoImage = canvas.toDataURL('image/jpeg', 0.92);
+            localStorage.setItem('castecalendar_settings', JSON.stringify(settingsData));
+            saveSettingsCloud().then(() => applySettings());
+            document.getElementById('logo-crop-modal').style.display = 'none';
+        }
+
+        function cancelLogoCrop() {
+            document.getElementById('logo-crop-modal').style.display = 'none';
+        }
+
+        function removeBgImage() {
+            settingsData.bgImage = '';
+            localStorage.setItem('castecalendar_settings', JSON.stringify(settingsData));
+            saveSettingsCloud().then(() => applySettings());
+        }
+
+        function resetCustomization() {
+            settingsData = {
+                titleColor: '#ffffff',
+                numColor: '#ffffff',
+                cardBg: '#131b2e',
+                bgImage: '',
+                logoImage: '',
+                weatherCity: 'Castejón de Valdejasa',
+                weatherLatitude: 41.8147,
+                weatherLongitude: -0.8894
+            };
+            localStorage.setItem('castecalendar_settings', JSON.stringify(settingsData));
+            saveSettingsCloud();
+
+            document.getElementById('picker-title').value = settingsData.titleColor;
+            document.getElementById('picker-num').value = settingsData.numColor;
+            document.getElementById('picker-card').value = settingsData.cardBg;
+            document.getElementById('bg-image-input').value = '';
+            document.getElementById('weather-city-input').value = 'Castejón de Valdejasa';
+            document.getElementById('weather-city-status').textContent = '';
+
+            applySettings();
+            renderCalendar();
+            updateWeather();
+        }
+
+        function renderCalendar() {
+            const grid = document.getElementById('calendar-grid');
+            const headers = Array.from(grid.querySelectorAll('.week-day'));
+            grid.innerHTML = '';
+            headers.forEach(h => grid.appendChild(h));
+
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            document.getElementById('month-year-label').innerText = `${monthFullNames[month]} ${year}`;
+
+            const firstDayIndex = (new Date(year, month, 1).getDay() + 6) % 7;
+            const totalDays = new Date(year, month + 1, 0).getDate();
+            const prevMonthDays = new Date(year, month, 0).getDate();
+
+            function buildDayCell(cellYear, cellMonth, day, faded = false) {
+                const cell = document.createElement('div');
+                cell.className = 'day-cell';
+                if (faded) cell.classList.add('adjacent-month');
+                const dayKey = `${cellYear}-${cellMonth}-${day}`;
+
+                const num = document.createElement('div');
+                num.className = 'day-number';
+                num.innerText = day;
+                cell.appendChild(num);
+
+                const data = calendarData[dayKey];
+                if (data) {
+                    if (data.shifts && data.shifts.length > 0) {
+                        cell.style.backgroundColor = settingsData.cardBg;
+                        const container = document.createElement('div');
+                        container.className = `shifts-container ${data.shifts.length === 1 ? 'single' : ''}`;
+                        data.shifts.forEach(shift => {
+                            const block = document.createElement('div');
+                            block.className = `shift-block ${shift}`;
+                            if (shift === 'mañana') block.innerText = 'M';
+                            if (shift === 'tarde') block.innerText = 'T';
+                            if (shift === 'noche') block.innerText = 'N';
+                            if (shift === 'libre') block.innerText = 'Libre';
+                            if (shift === 'vl') block.innerText = 'VL';
+                            if (shift === 'vf') block.innerText = 'VF';
+                            if (shift === 'sol') block.innerText = '☀️';
+                            container.appendChild(block);
+                        });
+                        cell.appendChild(container);
+                    }
+                    if (data.note) {
+                        const noteDiv = document.createElement('div');
+                        noteDiv.className = 'day-note';
+                        noteDiv.innerText = data.note;
+                        cell.appendChild(noteDiv);
+                    }
+                }
+
+                cell.onclick = () => openModal(day, monthFullNames[cellMonth], cellYear, dayKey);
+                return cell;
+            }
+
+            for (let i = firstDayIndex - 1; i >= 0; i--) {
+                const dayNum = prevMonthDays - i;
+                const prevDate = new Date(year, month - 1, dayNum);
+                grid.appendChild(buildDayCell(prevDate.getFullYear(), prevDate.getMonth(), dayNum, true));
+            }
+
+            for (let day = 1; day <= totalDays; day++) {
+                grid.appendChild(buildDayCell(year, month, day, false));
+            }
+
+            const totalCellsSoFar = firstDayIndex + totalDays;
+            const remainingCells = totalCellsSoFar <= 35 ? (35 - totalCellsSoFar) : (42 - totalCellsSoFar);
+            for (let day = 1; day <= remainingCells; day++) {
+                const nextDate = new Date(year, month + 1, day);
+                grid.appendChild(buildDayCell(nextDate.getFullYear(), nextDate.getMonth(), day, true));
+            }
+        }
+
+        function changeMonthOffset(direction) {
+            currentDate.setMonth(currentDate.getMonth() + direction);
+            renderCalendar();
+        }
+
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        const gridElement = document.getElementById('calendar-grid');
+        gridElement.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, {passive: true});
+
+        gridElement.addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipeGesture();
+        }, {passive: true});
+
+        function handleSwipeGesture() {
+            const threshold = 50;
+            if (touchEndX < touchStartX - threshold) {
+                changeMonthOffset(1);
+            }
+            if (touchEndX > touchStartX + threshold) {
+                changeMonthOffset(-1);
+            }
+        }
+
+        function openMonthPicker() {
+            pickerSelectedMonth = currentDate.getMonth();
+            pickerSelectedYear = currentDate.getFullYear();
+            buildMonthPickerGrid();
+            document.getElementById('picker-year-display').innerText = pickerSelectedYear;
+            document.getElementById('month-picker-modal').style.display = 'flex';
+        }
+
+        function closeMonthPicker() {
+            document.getElementById('month-picker-modal').style.display = 'none';
+        }
+
+        function buildMonthPickerGrid() {
+            const container = document.getElementById('months-grid-container');
+            container.innerHTML = '';
+            monthShortNames.forEach((name, index) => {
+                const btn = document.createElement('button');
+                btn.className = `month-picker-btn ${index === pickerSelectedMonth ? 'active' : ''}`;
+                btn.innerText = name;
+                btn.onclick = () => {
+                    pickerSelectedMonth = index;
+                    buildMonthPickerGrid();
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        function adjustPickerYear(amount) {
+            pickerSelectedYear += amount;
+            document.getElementById('picker-year-display').innerText = pickerSelectedYear;
+        }
+
+        function applyMonthPicker() {
+            currentDate = new Date(pickerSelectedYear, pickerSelectedMonth, 1);
+            renderCalendar();
+            closeMonthPicker();
+        }
+
+        function openModal(day, monthName, year, dayKey) {
+            selectedDayKey = dayKey;
+            document.getElementById('modal-date-title').innerText = `Día ${day} de ${monthName} ${year}`;
+            document.getElementById('note-input').value = calendarData[dayKey]?.note || '';
+            document.body.classList.add('modal-open');
+            document.getElementById('shift-modal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('shift-modal').style.display = 'none';
+            document.body.classList.remove('modal-open');
+        }
+
+        async function setShift(index, shiftType) {
+            if (!calendarData[selectedDayKey]) {
+                calendarData[selectedDayKey] = { shifts: [], note: '' };
+            }
+            if (!calendarData[selectedDayKey].shifts) {
+                calendarData[selectedDayKey].shifts = [];
+            }
+
+            if (index === 0) {
+                if (calendarData[selectedDayKey].shifts.length === 0) {
+                    calendarData[selectedDayKey].shifts.push(shiftType);
+                } else {
+                    calendarData[selectedDayKey].shifts[0] = shiftType;
+                }
+            } else if (index === 1) {
+                if (calendarData[selectedDayKey].shifts.length === 0) {
+                    calendarData[selectedDayKey].shifts = ['libre', shiftType];
+                } else if (calendarData[selectedDayKey].shifts.length === 1) {
+                    calendarData[selectedDayKey].shifts.push(shiftType);
+                } else {
+                    calendarData[selectedDayKey].shifts[1] = shiftType;
+                }
+            }
+
+            localStorage.setItem('castecalendar_calendar_data', JSON.stringify(calendarData));
+            await saveCalendarCloud();
+            renderCalendar();
+            closeModal();
+        }
+
+        async function saveNote() {
+            const noteText = document.getElementById('note-input').value.slice(0, 50);
+            if (!calendarData[selectedDayKey]) {
+                calendarData[selectedDayKey] = { shifts: [], note: '' };
+            }
+            calendarData[selectedDayKey].note = noteText;
+            localStorage.setItem('castecalendar_calendar_data', JSON.stringify(calendarData));
+            await saveNoteCloud(selectedDayKey, noteText);
+            renderCalendar();
+            closeModal();
+        }
+
+        async function clearDay() {
+            if (currentRole !== 'admin') {
+                await saveNoteCloud(selectedDayKey, '');
+                if (calendarData[selectedDayKey]) {
+                    delete calendarData[selectedDayKey].note;
+                    if (!calendarData[selectedDayKey].shifts?.length) delete calendarData[selectedDayKey];
+                }
+                localStorage.setItem('castecalendar_calendar_data', JSON.stringify(calendarData));
+                renderCalendar();
+                closeModal();
+                return;
+            }
+            delete calendarData[selectedDayKey];
+            localStorage.setItem('castecalendar_calendar_data', JSON.stringify(calendarData));
+            await deleteShiftCloud(selectedDayKey);
+            await saveNoteCloud(selectedDayKey, '');
+            renderCalendar();
+            closeModal();
+        }
+
+        function openSettings(focusCity = false) {
+            document.getElementById('picker-title').value = settingsData.titleColor || '#ffffff';
+            document.getElementById('picker-num').value = settingsData.numColor || '#ffffff';
+            document.getElementById('picker-card').value = settingsData.cardBg || '#131b2e';
+            document.getElementById('weather-city-input').value = settingsData.weatherCity || 'Castejón de Valdejasa';
+            document.getElementById('weather-city-status').textContent = '';
+            document.getElementById('settings-modal').style.display = 'flex';
+            if (focusCity) {
+                setTimeout(() => {
+                    const input = document.getElementById('weather-city-input');
+                    input.focus();
+                    input.select();
+                }, 80);
+            }
+        }
+
+        function closeSettings() {
+            document.getElementById('settings-modal').style.display = 'none';
+        }
+
+        document.getElementById('month-year-label').addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                openMonthPicker();
+            }
+        });
+
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (event) => {
+                if (event.target === overlay) {
+                    overlay.style.display = 'none';
+                }
+            });
+        });
+
+        const logoContainer = document.querySelector('.header-logo-container');
+        logoContainer.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                document.getElementById('logo-image-input').click();
+            }
+        });
+
+        const logoCropStage = document.getElementById('logo-crop-stage');
+        const logoCropImage = document.getElementById('logo-crop-image');
+        const logoCropZoom = document.getElementById('logo-crop-zoom');
+
+        logoCropZoom.addEventListener('input', (event) => {
+            logoCropScale = Number(event.target.value);
+            positionLogoCropImage(false);
+            clampLogoCropPosition();
+        });
+
+        logoCropStage.addEventListener('pointerdown', (event) => {
+            if (event.target !== logoCropImage) return;
+            logoCropDragging = true;
+            logoCropImage.classList.add('dragging');
+            logoCropStartX = event.clientX;
+            logoCropStartY = event.clientY;
+            logoCropStartImgX = logoCropX;
+            logoCropStartImgY = logoCropY;
+            logoCropStage.setPointerCapture(event.pointerId);
+        });
+
+        logoCropStage.addEventListener('pointermove', (event) => {
+            if (!logoCropDragging) return;
+            logoCropX = logoCropStartImgX + (event.clientX - logoCropStartX);
+            logoCropY = logoCropStartImgY + (event.clientY - logoCropStartY);
+            positionLogoCropImage(false);
+        });
+
+        function stopLogoCropDrag() {
+            if (!logoCropDragging) return;
+            logoCropDragging = false;
+            logoCropImage.classList.remove('dragging');
+            clampLogoCropPosition();
+        }
+        logoCropStage.addEventListener('pointerup', stopLogoCropDrag);
+        logoCropStage.addEventListener('pointercancel', stopLogoCropDrag);
+
+        function updateHomeScreenIcon() {
+            const src = settingsData.logoImage || defaultLogoSrc;
+            const iconLink = document.getElementById('apple-touch-icon');
+            const faviconLink = document.getElementById('page-favicon');
+            if (!src) return;
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = 180; canvas.height = 180;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, 180, 180);
+                ctx.drawImage(img, 0, 0, 180, 180);
+                const icon = canvas.toDataURL('image/png');
+                iconLink.href = icon;
+                faviconLink.href = icon;
+            };
+            img.src = src;
+        }
+
+        initCloud();
+    </script>
+</body>
+</html>

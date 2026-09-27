@@ -705,9 +705,8 @@
         <div class="auth-card">
             <div class="auth-title">CasteCalendar · Calendario</div>
             <div class="auth-subtitle">Acceso privado y compartido</div>
-            <input id="auth-email" type="email" autocomplete="username" placeholder="Correo electrónico">
-            <input id="auth-password" type="password" autocomplete="current-password" placeholder="Clave">
-            <button class="btn-action" id="auth-login-btn" onclick="loginCloud()">Entrar</button>
+            <input id="auth-email" type="email" autocomplete="email" placeholder="Correo electrónico">
+            <button class="btn-action" id="auth-login-btn" onclick="loginCloud()">Enviar enlace de acceso</button>
             <div id="auth-status" class="auth-status"></div>
         </div>
     </div>
@@ -913,12 +912,25 @@
 
         async function loginCloud(){
             const email=document.getElementById('auth-email').value.trim();
-            const password=document.getElementById('auth-password').value;
-            if(!email || !password){ setAuthStatus('Escribe el correo y la clave.'); return; }
-            setAuthStatus('Entrando…');
-            const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
-            if(error){ setAuthStatus(error.message.includes('Invalid login credentials')?'Correo o clave incorrectos.':error.message); return; }
-            await startCloudSession(data.user);
+            if(!email){ setAuthStatus('Escribe tu correo electrónico.'); return; }
+            const btn=document.getElementById('auth-login-btn');
+            if(btn){ btn.disabled=true; btn.textContent='Enviando enlace…'; }
+            setAuthStatus('Enviando el enlace de acceso…');
+            try{
+                const {error}=await supabaseClient.auth.signInWithOtp({
+                    email,
+                    options:{
+                        emailRedirectTo: window.location.origin + window.location.pathname
+                    }
+                });
+                if(error) throw error;
+                setAuthStatus('Revisa tu correo y pulsa el enlace para entrar.', true);
+            }catch(error){
+                console.error('Acceso por enlace',error);
+                setAuthStatus(error?.message || 'No se pudo enviar el enlace.');
+            }finally{
+                if(btn){ btn.disabled=false; btn.textContent='Enviar enlace de acceso'; }
+            }
         }
 
         async function logoutCloud(){ await supabaseClient.auth.signOut(); location.reload(); }
